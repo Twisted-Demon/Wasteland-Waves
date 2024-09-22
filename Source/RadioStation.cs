@@ -37,11 +37,6 @@ public class RadioStation : MonoBehaviour
         PlayCurrentSong();
     }
 
-    private void OnDestroy()
-    {
-        StartCoroutine(UnloadAudioData());
-    }
-
     public void Init(string stationName)
     {
         name = stationName;
@@ -108,25 +103,6 @@ public class RadioStation : MonoBehaviour
         }
 
         foreach (var songIndex in songIndexList) _songQueue.Enqueue(songIndex);
-    }
-
-    private IEnumerator UnloadAudioData()
-    {
-        if (_internalAudioSource.isPlaying)
-            _internalAudioSource.Stop();
-
-        _internalAudioSource.clip = null;
-
-        foreach (var songName in _stationSongs.Keys)
-        {
-            _stationSongs[songName] = null;
-            Debug.Log($"Unloading Song: {songName}");
-        }
-
-        yield return null;
-        yield return Resources.UnloadUnusedAssets();
-
-        Debug.Log("Audio Data Unloaded.");
     }
 
     private IEnumerator LoadAudioClip(string songName)
