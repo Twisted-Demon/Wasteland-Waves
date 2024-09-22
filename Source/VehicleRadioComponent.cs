@@ -248,7 +248,7 @@ public class VehicleRadioComponent : MonoBehaviour
         _currentStation = newStation;
         _currentSong = newSong;
         var currentStationComponent = _radioManager.GetStation(newStation);
-        var currentSongClip = currentStationComponent.GetSongClip(newSong);
+        AudioClip currentSongClip = null;//currentStationComponent.GetSongClip(newSong);
 
         _audioSource.clip = currentSongClip;
         _audioSource.time = currentTime;
