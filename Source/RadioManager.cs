@@ -21,7 +21,7 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 
     private void CreateAndInitRadioStations()
     {
-        var stationNames = SingletonMonoBehaviour<AudioFileManager>.Instance.GetStations();
+        var stationNames = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStations();
 
         foreach (var stationName in stationNames)
         {

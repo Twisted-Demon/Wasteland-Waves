@@ -20,11 +20,20 @@ public class WastelandWavesMod : IModApi
         Object.DontDestroyOnLoad(managersGameObject);
 
         Debug.Log("Initializing Audio File Manager");
-        managersGameObject.AddComponent<AudioFileManager>();
+        managersGameObject.AddComponent<SongsFileManager>();
         Debug.Log("Audio File Manager Initialized");
+        
+        Debug.Log("Initializing Resources Manager");
+        managersGameObject.AddComponent<ResourcesManager>();
+        Debug.Log("Audio Resources Initialized");
 
         Debug.Log("Initializing Radio Manager");
         managersGameObject.AddComponent<RadioManager>();
         Debug.Log("Audio Radio Initialized");
+        
+        Debug.Log("Initializing XuiManager Manager");
+        managersGameObject.AddComponent<ModdedXuiManager>();
+        Debug.Log("Audio Radio XuiManager");
+        
     }
 }

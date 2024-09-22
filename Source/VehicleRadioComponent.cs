@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using UniLinq;
 using UnityEngine;
 using Wasteland_Waves.Source.NetPackages;
@@ -17,6 +18,10 @@ public class VehicleRadioComponent : MonoBehaviour
     private string _currentStation = string.Empty;
     private bool _isLocalPlayerAttached;
     private float _setVolume = 0.65f;
+
+    private BiomeDefinition _currentBiome;
+
+    private XUiC_InGameHUD _inGameHud;
 
     private void Update()
     {
@@ -39,6 +44,7 @@ public class VehicleRadioComponent : MonoBehaviour
             PreviousStation();
 
         CheckIfRadioIsPlaying();
+        
     }
 
     public void Init(EntityVehicle entityVehicle)
@@ -47,12 +53,18 @@ public class VehicleRadioComponent : MonoBehaviour
         _audioSource = gameObject.AddComponent<AudioSource>();
         _audioSource.volume = 0;
         _audioSource.playOnAwake = false;
+        _currentBiome = entityVehicle.biomeStandingOn;
 
         var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
         var isSinglePlayer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsSinglePlayer;
 
         if (isServer || isSinglePlayer)
             _currentStation = Enumerable.First(_radioManager.GetStationNames());
+    }
+
+    public void ChangeBiome(BiomeDefinition newBiome)
+    {
+        _currentBiome = newBiome;
     }
 
     public string GetCurrentStationPlaying()
@@ -166,6 +178,8 @@ public class VehicleRadioComponent : MonoBehaviour
         var isLocalPlayerAttachedOld = _isLocalPlayerAttached;
         _isLocalPlayerAttached = _entityVehicle.IsAttached(localPlayer);
 
+        SingletonMonoBehaviour<ModdedXuiManager>.Instance.showRadioInfo = _isLocalPlayerAttached;
+
         if (_isLocalPlayerAttached && !isLocalPlayerAttachedOld)
             PlayerEnteredVehicle();
         if (!_isLocalPlayerAttached && isLocalPlayerAttachedOld)
@@ -242,12 +256,23 @@ public class VehicleRadioComponent : MonoBehaviour
         if (!_audioSource.isPlaying && _isLocalPlayerAttached)
             _audioSource.Play();
 
+        SingletonMonoBehaviour<ModdedXuiManager>.Instance.currentSongToShow = newSong;
+        SingletonMonoBehaviour<ModdedXuiManager>.Instance.currentStationToShow = newStation;
+
         var localPlayer = _entityVehicle.world.GetLocalPlayers()[0];
 
-        if (_isLocalPlayerAttached && (isStationChanged || enteredVehicle))
-            GameManager.ShowTooltip(localPlayer, $"Station: {newStation}");
+        var showToolTp  = (isStationChanged || isSongChanged || enteredVehicle) && _isLocalPlayerAttached;
+        var tooltipString = new StringBuilder();
 
-        if (_isLocalPlayerAttached && (isSongChanged || enteredVehicle))
-            GameManager.ShowTooltip(localPlayer, $"Song: {Path.GetFileNameWithoutExtension(newSong)}");
+        if (!showToolTp)
+            return;
+        
+        if(isStationChanged || enteredVehicle)
+            tooltipString.AppendLine($"WWMOD:Station: {newStation}");
+        
+        if(isSongChanged || enteredVehicle)
+            tooltipString.Append($"WWMOD:Song: {Path.GetFileNameWithoutExtension(newSong)}");
+        
+        GameManager.ShowTooltip(localPlayer, tooltipString.ToString());
     }
 }

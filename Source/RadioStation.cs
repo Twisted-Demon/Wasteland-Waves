@@ -41,7 +41,7 @@ public class RadioStation : MonoBehaviour
     {
         name = stationName;
 
-        var songNames = SingletonMonoBehaviour<AudioFileManager>.Instance.GetStationSongs(name);
+        var songNames = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStationSongs(name);
         foreach (var songName in songNames) StartCoroutine(LoadAudioClip(songName));
         _internalAudioSource = gameObject.AddComponent<AudioSource>();
         _internalAudioSource.volume = 0f;
@@ -94,7 +94,7 @@ public class RadioStation : MonoBehaviour
     private IEnumerator LoadAudioClip(string songName)
     {
         Debug.Log($"Loading Song: {songName}");
-        var audioFileManager = SingletonMonoBehaviour<AudioFileManager>.Instance;
+        var audioFileManager = SingletonMonoBehaviour<SongsFileManager>.Instance;
 
         var filePath = $"{audioFileManager.GetDataDirectory()}\\{name}\\{songName}";
 
@@ -116,7 +116,7 @@ public class RadioStation : MonoBehaviour
         }
 
         _loadedSongs += 1;
-        var songCount = SingletonMonoBehaviour<AudioFileManager>.Instance.GetStationSongs(name).Count;
+        var songCount = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStationSongs(name).Count;
 
         if (_loadedSongs < songCount) yield break;
 

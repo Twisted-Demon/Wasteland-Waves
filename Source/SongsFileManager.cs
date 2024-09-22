@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Wasteland_Waves.Source;
 
-public class AudioFileManager : SingletonMonoBehaviour<AudioFileManager>
+public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
 {
     private string _gameDirectory;
     private string _modDirectory;

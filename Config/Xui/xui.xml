@@ -1,0 +1,6 @@
+﻿<configs>
+    <!-- Append the custom window to the HUD group so it's available in-game -->
+    <append xpath="/window_groups/group[@name='hud']">
+        <window name="radioInfo" />
+    </append>
+</configs>
