@@ -14,21 +14,10 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 
         CreateAndInitRadioStations();
     }
+    
+    public IEnumerable<string> GetStationNames()=> _radioStations.Keys;
 
-    public IEnumerable<RadioStation> GetStations()
-    {
-        return _radioStations.Values;
-    }
-
-    public IEnumerable<string> GetStationNames()
-    {
-        return _radioStations.Keys;
-    }
-
-    public RadioStation GetStation(string stationName)
-    {
-        return _radioStations[stationName];
-    }
+    public RadioStation GetStation(string stationName)=> _radioStations[stationName];
 
     private void CreateAndInitRadioStations()
     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UniLinq;
 using UnityEngine;
 using Wasteland_Waves.Source.NetPackages;
@@ -10,12 +11,12 @@ public class VehicleRadioComponent : MonoBehaviour
 {
     private readonly RadioManager _radioManager = SingletonMonoBehaviour<RadioManager>.Instance;
     private AudioSource _audioSource;
-    private string _currentSong = string.Empty;
-
-    private string _currentStation = string.Empty;
     private EntityVehicle _entityVehicle;
+    
+    private string _currentSong = string.Empty;
+    private string _currentStation = string.Empty;
     private bool _isLocalPlayerAttached;
-    private float _setVolume = 1f;
+    private float _setVolume = 0.65f;
 
     private void Update()
     {
@@ -247,6 +248,6 @@ public class VehicleRadioComponent : MonoBehaviour
             GameManager.ShowTooltip(localPlayer, $"Station: {newStation}");
 
         if (_isLocalPlayerAttached && (isSongChanged || enteredVehicle))
-            GameManager.ShowTooltip(localPlayer, $"Song: {newSong}");
+            GameManager.ShowTooltip(localPlayer, $"Song: {Path.GetFileNameWithoutExtension(newSong)}");
     }
 }

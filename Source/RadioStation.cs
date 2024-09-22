@@ -48,25 +48,11 @@ public class RadioStation : MonoBehaviour
         _internalAudioSource.playOnAwake = false;
     }
 
-    public float GetStationTime()
-    {
-        return _internalAudioSource.time;
-    }
+    public float GetStationTime() => _internalAudioSource.time;
 
-    public string GetCurrentSongName()
-    {
-        return _currentSong;
-    }
+    public string GetCurrentSongName()=> _currentSong;
 
-    public AudioClip GetSongClip(string songName)
-    {
-        return _stationSongs[songName];
-    }
-
-    public AudioClip GetCurrentSongClip()
-    {
-        return _stationSongs[_currentSong];
-    }
+    public AudioClip GetSongClip(string songName)=> _stationSongs[songName];
 
     private void SetCurrentSong()
     {
@@ -110,7 +96,7 @@ public class RadioStation : MonoBehaviour
         Debug.Log($"Loading Song: {songName}");
         var audioFileManager = SingletonMonoBehaviour<AudioFileManager>.Instance;
 
-        var filePath = $"{audioFileManager.dataDirectory}\\{name}\\{songName}";
+        var filePath = $"{audioFileManager.GetDataDirectory()}\\{name}\\{songName}";
 
         var dh = new DownloadHandlerAudioClip($"file://{filePath}", AudioType.MPEG);
         dh.compressed = true;
@@ -135,6 +121,5 @@ public class RadioStation : MonoBehaviour
         if (_loadedSongs < songCount) yield break;
 
         _isFinishedLoading = true;
-        Debug.LogWarning($"Station {name} finished loading all songs");
     }
 }

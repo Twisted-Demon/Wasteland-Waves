@@ -7,9 +7,9 @@ namespace Wasteland_Waves.Source;
 
 public class AudioFileManager : SingletonMonoBehaviour<AudioFileManager>
 {
-    public string gameDirectory;
-    public string modDirectory;
-    public string dataDirectory;
+    private string _gameDirectory;
+    private string _modDirectory;
+    private string _dataDirectory;
     private readonly Dictionary<string, string[]> _stationMap = new();
 
     public override void Awake()
@@ -17,9 +17,9 @@ public class AudioFileManager : SingletonMonoBehaviour<AudioFileManager>
         base.Awake();
         IsPersistant = true;
 
-        gameDirectory = Directory.GetCurrentDirectory();
-        modDirectory = $@"{gameDirectory}\Mods\Wasteland-Waves";
-        dataDirectory = $@"{modDirectory}\Data";
+        _gameDirectory = Directory.GetCurrentDirectory();
+        _modDirectory = $@"{_gameDirectory}\Mods\Wasteland-Waves";
+        _dataDirectory = $@"{_modDirectory}\Data";
 
         InitStations();
     }
@@ -28,13 +28,13 @@ public class AudioFileManager : SingletonMonoBehaviour<AudioFileManager>
     private void InitStations()
     {
         //get the names of all stations.
-        var stations = Directory.GetDirectories(dataDirectory).Select(Path.GetFileName);
+        var stations = Directory.GetDirectories(_dataDirectory).Select(Path.GetFileName);
 
         //get the files names in every station.
         foreach (var station in stations)
         {
             Debug.LogWarning($"Found Station: {station}");
-            var files = Directory.GetFiles($"{dataDirectory}\\{station}", "*.mp3").Select(Path.GetFileName).ToArray();
+            var files = Directory.GetFiles($"{_dataDirectory}\\{station}", "*.mp3").Select(Path.GetFileName).ToArray();
 
             if (files.Length == 0) continue;
 
@@ -55,23 +55,5 @@ public class AudioFileManager : SingletonMonoBehaviour<AudioFileManager>
         return _stationMap[stationName].ToList();
     }
 
-    //IEnumerator LoadAudioClip()
-    //{
-    //    var filepath = $"file://{_audioFilesDirectory}\\{_audioFiles[0]}";
-    //    Debug.LogWarning($"Loading {filepath}");
-//
-    //    var dh = new DownloadHandlerAudioClip(filepath, AudioType.MPEG);
-    //    dh.compressed = true;
-//
-    //    using var wr = new UnityWebRequest(filepath, "Get", dh, null);
-    //    yield return wr.SendWebRequest();
-    //    if (wr.responseCode == 200)
-    //    {
-    //        Debug.LogWarning($"LOADED SONG");
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError($"SONG NOT LOADED"); 
-    //    }
-    //}
+    public string GetDataDirectory() => _dataDirectory;
 }
