@@ -146,6 +146,7 @@ public class RadioStation : MonoBehaviour
         if (_nextSongClip != null && _nextSongClip.name == newCurrentSong && _nextSongClip.loadState == AudioDataLoadState.Loaded)
         {
             _currentSongClip = _nextSongClip;
+            _nextSongClip = null;
         }
         // Otherwise, load the new song and set it as the current song.
         else
