@@ -40,7 +40,6 @@ public class VehicleRadioComponent : MonoBehaviour
             PreviousStation();
 
         CheckIfRadioIsPlaying();
-        
     }
 
     public void Init(EntityVehicle entityVehicle)
@@ -82,19 +81,8 @@ public class VehicleRadioComponent : MonoBehaviour
                 newStationIndex = stationList.Count - 1;
 
             var newStation = stationList[newStationIndex];
-            var newSong = _radioManager.GetStation(newStation).GetCurrentSongName();
-            var currentTime = _radioManager.GetStation(newStation).GetStationTime();
-
             //update radio
-            UpdateRadio(newStation, newSong, currentTime);
-
-            //if we are a server, send the new data to the other clients.
-            if (!isServer) return;
-            var cm = SingletonMonoBehaviour<ConnectionManager>.Instance;
-            var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()
-                .Setup(_entityVehicle.entityId, newStation, newSong, currentTime);
-
-            cm.SendPackage(package, _allButAttachedToEntityId: _entityVehicle.entityId);
+            UpdateRadio(newStation);
         }
         else
         {
@@ -122,19 +110,8 @@ public class VehicleRadioComponent : MonoBehaviour
                 newStationIndex = 0;
 
             var newStation = stationList[newStationIndex];
-            var newSong = _radioManager.GetStation(newStation).GetCurrentSongName();
-            var currentTime = _radioManager.GetStation(newStation).GetStationTime();
-
             //update radio
-            UpdateRadio(newStation, newSong, currentTime);
-
-            //if we are a server, send the new data to the other clients.
-            if (!isServer) return;
-            var cm = SingletonMonoBehaviour<ConnectionManager>.Instance;
-            var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()
-                .Setup(_entityVehicle.entityId, newStation, newSong, currentTime);
-
-            cm.SendPackage(package, _allButAttachedToEntityId: _entityVehicle.entityId);
+            UpdateRadio(newStation);
         }
         else
         {
@@ -183,26 +160,8 @@ public class VehicleRadioComponent : MonoBehaviour
     private void CheckIfRadioIsPlaying()
     {
         if (_audioSource.isPlaying) return;
-
-        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
-        var isSinglePlayer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsSinglePlayer;
-
-        if (isServer || isSinglePlayer)
-        {
-            UpdateRadio(
-                _currentStation,
-                _radioManager.GetStation(_currentStation).GetCurrentSongName(),
-                _radioManager.GetStation(_currentStation).GetStationTime()
-            );
-        }
-        else
-        {
-            var cm = SingletonMonoBehaviour<ConnectionManager>.Instance;
-            var package = NetPackageManager.GetPackage<NetPackageVehicleRadioRequestData>()
-                .Setup(_entityVehicle.entityId);
-
-            cm.SendToServer(package);
-        }
+        if (_currentStation == string.Empty) return;
+        UpdateRadio(_currentStation);
     }
 
     private void PlayerExitedVehicle()
@@ -217,15 +176,13 @@ public class VehicleRadioComponent : MonoBehaviour
 
         if (isServer || isSinglePlayer)
         {
-            UpdateRadio(
-                _currentStation,
-                _radioManager.GetStation(_currentStation).GetCurrentSongName(),
-                _radioManager.GetStation(_currentStation).GetStationTime(),
-                true
-            );
+            UpdateRadio(_currentStation, true);
         }
         else
         {
+            _currentStation = string.Empty;
+            _currentSong = string.Empty;
+            
             var cm = SingletonMonoBehaviour<ConnectionManager>.Instance;
             var package = NetPackageManager.GetPackage<NetPackageVehicleRadioRequestData>()
                 .Setup(_entityVehicle.entityId);
@@ -234,24 +191,22 @@ public class VehicleRadioComponent : MonoBehaviour
         }
     }
 
-    public void UpdateRadio(string newStation, string newSong, float currentTime, bool enteredVehicle = false)
+    public void UpdateRadio(string newStation, bool enteredVehicle = false)
     {
+        var station = _radioManager.GetStation(newStation);
+        
         var isStationChanged = _currentStation != newStation;
-        var isSongChanged = _currentSong != newSong;
-
+        var isSongChanged = _currentSong != station.GetCurrentSongName();
+        
         _currentStation = newStation;
-        _currentSong = newSong;
-        var currentStationComponent = _radioManager.GetStation(newStation);
-        AudioClip currentSongClip = null;//currentStationComponent.GetSongClip(newSong);
-
+        _currentSong = station.GetCurrentSongName();
+        var currentSongClip = station.GetCurrentSongClip();
+        
         _audioSource.clip = currentSongClip;
-        _audioSource.time = currentTime;
+        _audioSource.time = station.GetStationTime();
 
         if (!_audioSource.isPlaying && _isLocalPlayerAttached)
             _audioSource.Play();
-
-        SingletonMonoBehaviour<ModdedXuiManager>.Instance.currentSongToShow = newSong;
-        SingletonMonoBehaviour<ModdedXuiManager>.Instance.currentStationToShow = newStation;
 
         var localPlayer = _entityVehicle.world.GetLocalPlayers()[0];
 
@@ -265,8 +220,19 @@ public class VehicleRadioComponent : MonoBehaviour
             tooltipString.AppendLine($"WWMOD:Station: {newStation}");
         
         if(isSongChanged || enteredVehicle)
-            tooltipString.Append($"WWMOD:Song: {Path.GetFileNameWithoutExtension(newSong)}");
+            tooltipString.Append($"WWMOD:Song: {Path.GetFileNameWithoutExtension(_currentSong)}");
         
         GameManager.ShowTooltip(localPlayer, tooltipString.ToString());
+        
+        //sync with clients
+        //if we are a server, send the new data to the other clients.
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if (!isServer) return;
+        var cm = SingletonMonoBehaviour<ConnectionManager>.Instance;
+        var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()
+            .Setup(_entityVehicle.entityId, newStation, _currentSong, station.GetStationTime());
+
+        cm.SendPackage(package, _allButAttachedToEntityId: _entityVehicle.entityId);
     }
+    
 }

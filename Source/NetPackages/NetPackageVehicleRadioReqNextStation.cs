@@ -50,7 +50,7 @@ public class NetPackageVehicleRadioReqNextStation : NetPackage
         var currentTime = rm.GetStation(newStation).GetStationTime();
 
         //if we are a client update locally
-        vehicleRadio.UpdateRadio(newStation, newSong, currentTime);
+        vehicleRadio.UpdateRadio(newStation);
 
         //send to other clients
         var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()

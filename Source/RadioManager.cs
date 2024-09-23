@@ -7,13 +7,14 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 {
     private readonly Dictionary<string, RadioStation> _radioStations = new();
 
-    public override void Awake()
+    public override void singletonAwake()
     {
-        base.Awake();
+        base.singletonAwake();
         IsPersistant = true;
 
         CreateAndInitRadioStations();
     }
+    
     
     public IEnumerable<string> GetStationNames()=> _radioStations.Keys;
 
@@ -22,6 +23,44 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
     public void UpdateRadioStationFromServer(string stationName, string newCurrentSong, string newNextSong, float time)
     {
         _radioStations[stationName].UpdateStationFromServer(newCurrentSong, newNextSong, time);
+    }
+
+    public void CleanUp()
+    {
+        foreach(var station in _radioStations.Values)
+            station.CleanUp();
+    }
+    
+    public void PlayerDisconnected(ClientInfo clientInfo)
+    {
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if (!isServer) return;
+        
+        if(clientInfo == null) return;
+        
+        Debug.LogWarning("Client Disconnected");
+
+        foreach (var station in _radioStations.Values)
+        {
+            if (station == null) continue;
+            station.PlayerDisconnected(clientInfo);
+        }
+    }
+    public void PlayerSpawnedInWorld(ClientInfo clientInfo)
+    {
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if (!isServer) return;
+        
+        if(clientInfo == null) return;
+        
+        Debug.LogWarning("Client Spawned in World, sending data.");
+
+        foreach (var station in _radioStations.Values)
+        {
+            if (station == null) continue;
+            station.PlayerSpawnedInWorld(clientInfo);
+        }
+            
     }
 
     private void CreateAndInitRadioStations()

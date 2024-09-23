@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -11,8 +10,6 @@ namespace Wasteland_Waves.Source;
 
 public class RadioStation : MonoBehaviour
 {
-    private AudioSource _internalAudioSource;
-    
     private readonly Queue<string> _songQueue = new();
     private List<string> _stationSongs = new();
     
@@ -22,13 +19,14 @@ public class RadioStation : MonoBehaviour
     private bool _isValidated = false;
     private bool _isLoading = false;
 
-    public Action<string, string> OnSongChanged;
+    private float _time;
+    public bool isPlaying = true;
+
+    private float _elapsedUpdateTime = 0.0f;
+    private List<ClientInfo> _clients = new();
 
     private void Update()
     {
-        if(_currentSongClip != null)
-            _internalAudioSource.Play();
-        
         if (!_isValidated)
             return;
         
@@ -39,16 +37,23 @@ public class RadioStation : MonoBehaviour
         if (!isServerOrSinglePlayer)
             return;
         
+        UpdateRadio();
+        
         if(Input.GetKeyDown(KeyCode.Alpha9))
             PrintCurrentState();
+        
+        _elapsedUpdateTime += Time.deltaTime;
+        if (_elapsedUpdateTime >= 1f)
+        {
+            _elapsedUpdateTime = 0;
+            UpdateClients();
+        }
         
         //We only get to this point if we are in single player, or are the server.
         CheckAndLoadSongs();
         
-        UpdateClients();
-
         //play next song if one is not playing
-        if (_internalAudioSource.isPlaying) return;
+        if (isPlaying) return;
         ReadyNextSong();
     }
     
@@ -56,30 +61,73 @@ public class RadioStation : MonoBehaviour
     {
         name = stationName;
         
-        _internalAudioSource = gameObject.AddComponent<AudioSource>();
-        _internalAudioSource.volume = 0f;
-        _internalAudioSource.playOnAwake = false;
-        _internalAudioSource.loop = false;
-        
-        if (name == "Country")
-            _internalAudioSource.volume = 0.65f;
-        
         //get a list of songs to validate
         _stationSongs = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStationSongs(name);
         //validate the songs
         StartCoroutine(ValidateSongs());
+        
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if (!isServer) return;
+    }
+
+    public void CleanUp()
+    {
+        _clients.Clear();
+    }
+    public void PlayerSpawnedInWorld(ClientInfo clientInfo)
+    {
+        _clients.Add(clientInfo);
+    }
+
+    public void PlayerDisconnected(ClientInfo clientInfo)
+    {
+        _clients.Remove(clientInfo);
+    }
+
+    public void UpdateRadio()
+    {
+        this._time += Time.deltaTime;
+
+        if (_currentSongName is null) return;
+        
+        if (_time > _currentSongClip.length)
+        {
+            isPlaying = false;
+        }
     }
     
-    public float GetStationTime() => _internalAudioSource.time;
+    public float GetStationTime() => _time;
 
     public string GetCurrentSongName()=> _currentSongName;
+
+    public AudioClip GetCurrentSongClip() => _currentSongClip;
+    
+    public void Play() => isPlaying = true;
+
+    public void ResetAndPlay()
+    {
+        isPlaying = true;
+        _time = 0;
+    }
+
+    public void Stop()
+    {
+        isPlaying = false;
+        _time = 0;
+    }
+
+    public void Pause()
+    {
+        isPlaying = false;
+    }
 
     public void UpdateStationFromServer(string newCurrentSong, string newNextSong, float time)
     {
         var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
         if (isServer) return;
-        
-        _internalAudioSource.time = time;
+
+        _time = time;
+            
         //only update if we have a new song.
         if (_currentSongName == newCurrentSong) return;
         
@@ -101,9 +149,6 @@ public class RadioStation : MonoBehaviour
         {
             _nextSongClip = result;
         })); 
-        
-        //broadcast to radios that song has changed
-        OnSongChanged?.Invoke(name, newCurrentSong);
     }
 
     private void ReadyNextSong()
@@ -128,13 +173,11 @@ public class RadioStation : MonoBehaviour
         
         //unload the unused song
         StartCoroutine(UnloadAudioClip(songToUnload));
-        
-        _internalAudioSource.clip = _currentSongClip;
-        _internalAudioSource.Play();
+
+        ResetAndPlay();
         
         //update clients of the change
         UpdateClients();
-        OnSongChanged?.Invoke(name, _currentSongName);
     }
     
     private void ShuffleQueue()
@@ -187,19 +230,20 @@ public class RadioStation : MonoBehaviour
         var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
         if(!isServer) return;
 
+        if (_songQueue.Peek() == null)
+            return;
+
         var package = NetPackageManager.GetPackage<NetPackageUpdateRadioStation>().Setup(
             name,
             _currentSongName, 
             _songQueue.Peek(),
-            _internalAudioSource.time
+            _time
         );
-        
-        Debug.LogWarning($"Station: {name} - Updating Client Radios");
-        //except for ourselves
-        var localPlayer = GameManager.Instance.World.GetLocalPlayers()[0];
-        SingletonMonoBehaviour<ConnectionManager>.Instance.SendPackage(
-            package, _allButAttachedToEntityId: localPlayer.entityId
-        );
+
+        foreach (var clientInfo in _clients)
+        {
+            clientInfo.SendPackage(package);
+        }
     }
     
     private IEnumerator ValidateSongs()
@@ -293,7 +337,7 @@ public class RadioStation : MonoBehaviour
         message.AppendLine($"Next Song Clip Name: {_nextSongClip?.name}");
         message.AppendLine($"Current Song Load State: {_currentSongClip?.loadState}");
         message.AppendLine($"Next Song Load State: {_nextSongClip?.loadState}");
-        message.AppendLine($"Time: {_internalAudioSource.time}");
+        message.AppendLine($"Time: {_time}");
         
         Debug.LogWarning(message.ToString());
     }
