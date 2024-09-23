@@ -19,6 +19,11 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 
     public RadioStation GetStation(string stationName)=> _radioStations[stationName];
 
+    public void UpdateRadioStationFromServer(string stationName, string newCurrentSong, string newNextSong, float time)
+    {
+        _radioStations[stationName].UpdateStationFromServer(newCurrentSong, newNextSong, time);
+    }
+
     private void CreateAndInitRadioStations()
     {
         var stationNames = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStations();

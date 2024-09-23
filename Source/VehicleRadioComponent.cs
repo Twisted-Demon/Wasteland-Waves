@@ -19,10 +19,6 @@ public class VehicleRadioComponent : MonoBehaviour
     private bool _isLocalPlayerAttached;
     private float _setVolume = 0.65f;
 
-    private BiomeDefinition _currentBiome;
-
-    private XUiC_InGameHUD _inGameHud;
-
     private void Update()
     {
         CheckIfPlayerAttached();
@@ -53,7 +49,6 @@ public class VehicleRadioComponent : MonoBehaviour
         _audioSource = gameObject.AddComponent<AudioSource>();
         _audioSource.volume = 0;
         _audioSource.playOnAwake = false;
-        _currentBiome = entityVehicle.biomeStandingOn;
 
         var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
         var isSinglePlayer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsSinglePlayer;
@@ -64,7 +59,6 @@ public class VehicleRadioComponent : MonoBehaviour
 
     public void ChangeBiome(BiomeDefinition newBiome)
     {
-        _currentBiome = newBiome;
     }
 
     public string GetCurrentStationPlaying()

@@ -2,10 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using UniLinq;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Scripting;
+using Wasteland_Waves.Source.NetPackages;
 using Random = System.Random;
 
 namespace Wasteland_Waves.Source;
@@ -17,14 +16,19 @@ public class RadioStation : MonoBehaviour
     private readonly Queue<string> _songQueue = new();
     private List<string> _stationSongs = new();
     
-    private string _currentSong = string.Empty;
+    private string _currentSongName = string.Empty;
     private AudioClip _currentSongClip = null;
     private AudioClip _nextSongClip = null;
     private bool _isValidated = false;
     private bool _isLoading = false;
 
+    public Action<string, string> OnSongChanged;
+
     private void Update()
     {
+        if(_currentSongClip != null)
+            _internalAudioSource.Play();
+        
         if (!_isValidated)
             return;
         
@@ -40,12 +44,14 @@ public class RadioStation : MonoBehaviour
         
         //We only get to this point if we are in single player, or are the server.
         CheckAndLoadSongs();
+        
+        UpdateClients();
 
         //play next song if one is not playing
         if (_internalAudioSource.isPlaying) return;
         ReadyNextSong();
     }
-
+    
     public void Init(string stationName)
     {
         name = stationName;
@@ -54,31 +60,66 @@ public class RadioStation : MonoBehaviour
         _internalAudioSource.volume = 0f;
         _internalAudioSource.playOnAwake = false;
         _internalAudioSource.loop = false;
-
+        
+        if (name == "Country")
+            _internalAudioSource.volume = 0.65f;
+        
         //get a list of songs to validate
         _stationSongs = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStationSongs(name);
         //validate the songs
         StartCoroutine(ValidateSongs());
-        
     }
-
+    
     public float GetStationTime() => _internalAudioSource.time;
 
-    public string GetCurrentSongName()=> _currentSong;
-    
-    public AudioClip GetCurrentSongClip()=> _currentSongClip;
+    public string GetCurrentSongName()=> _currentSongName;
 
-    public string GetNextSongName() => _songQueue.Count == 0 ? string.Empty : _songQueue.Peek();
+    public void UpdateStationFromServer(string newCurrentSong, string newNextSong, float time)
+    {
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if (isServer) return;
+        
+        _internalAudioSource.time = time;
+        //only update if we have a new song.
+        if (_currentSongName == newCurrentSong) return;
+        
+        Debug.LogWarning($"Station: {name} - Updating from server");
+        
+        //unload the old song clip
+        var songClipToUnload = _currentSongClip;
+        StartCoroutine(UnloadAudioClip(songClipToUnload));
+        
+        //set the current song and load
+        _currentSongName = newCurrentSong;
+        StartCoroutine(LoadAudioClip(newCurrentSong, result =>
+        {
+            _currentSongClip = result;
+        }));
+        
+        //load the next song
+        StartCoroutine(LoadAudioClip(newNextSong, result =>
+        {
+            _nextSongClip = result;
+        })); 
+        
+        //broadcast to radios that song has changed
+        OnSongChanged?.Invoke(name, newCurrentSong);
+    }
 
     private void ReadyNextSong()
     {
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        var isSinglePlayer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsSinglePlayer;
+
+        if (!isServer && !isSinglePlayer) return;
+        
         Debug.Log($"Station: {name} - Current Song Finished, Starting New Song");
         //shuffle if we are out of songs
         if(_songQueue.Count == 0)
             ShuffleQueue();
         
         //set the current song
-        _currentSong = _songQueue.Dequeue();
+        _currentSongName = _songQueue.Dequeue();
         
         //set the current song clip to be the next song clip
         var songToUnload = _currentSongClip;
@@ -90,6 +131,10 @@ public class RadioStation : MonoBehaviour
         
         _internalAudioSource.clip = _currentSongClip;
         _internalAudioSource.Play();
+        
+        //update clients of the change
+        UpdateClients();
+        OnSongChanged?.Invoke(name, _currentSongName);
     }
     
     private void ShuffleQueue()
@@ -118,7 +163,7 @@ public class RadioStation : MonoBehaviour
         if (_currentSongClip == null && !_isLoading)
         {
             _isLoading = true;
-            StartCoroutine(LoadAudioClip(_currentSong, result =>
+            StartCoroutine(LoadAudioClip(_currentSongName, result =>
             {
                 _currentSongClip = result;
                 _isLoading = false;
@@ -134,6 +179,27 @@ public class RadioStation : MonoBehaviour
                 _isLoading = false;
             }));
         }
+    }
+
+    private void UpdateClients()
+    {
+        //If we are the server, update the other players
+        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+        if(!isServer) return;
+
+        var package = NetPackageManager.GetPackage<NetPackageUpdateRadioStation>().Setup(
+            name,
+            _currentSongName, 
+            _songQueue.Peek(),
+            _internalAudioSource.time
+        );
+        
+        Debug.LogWarning($"Station: {name} - Updating Client Radios");
+        //except for ourselves
+        var localPlayer = GameManager.Instance.World.GetLocalPlayers()[0];
+        SingletonMonoBehaviour<ConnectionManager>.Instance.SendPackage(
+            package, _allButAttachedToEntityId: localPlayer.entityId
+        );
     }
     
     private IEnumerator ValidateSongs()
@@ -166,9 +232,9 @@ public class RadioStation : MonoBehaviour
         //shuffle
         ShuffleQueue();
         //set the current song
-        _currentSong = _songQueue.Dequeue();
+        _currentSongName = _songQueue.Dequeue();
 
-        yield return LoadAudioClip(_currentSong, result =>
+        yield return LoadAudioClip(_currentSongName, result =>
         {
             _currentSongClip = result;
         });
@@ -208,6 +274,7 @@ public class RadioStation : MonoBehaviour
         if (wr.responseCode == 200)
         {
             dh.audioClip.LoadAudioData();
+            dh.audioClip.name = songName;
             callback?.Invoke(dh.audioClip);
         }
         else
@@ -221,8 +288,7 @@ public class RadioStation : MonoBehaviour
     {
         var message = new StringBuilder();
         message.AppendLine($"Station: {name}");
-        message.AppendLine($"Current Song: {_currentSong}");
-        message.AppendLine($"NextSong: {_songQueue.Peek()}");
+        message.AppendLine($"Current Song: {_currentSongName}");
         message.AppendLine($"Current Song Clip Name: {_currentSongClip?.name}");
         message.AppendLine($"Next Song Clip Name: {_nextSongClip?.name}");
         message.AppendLine($"Current Song Load State: {_currentSongClip?.loadState}");
