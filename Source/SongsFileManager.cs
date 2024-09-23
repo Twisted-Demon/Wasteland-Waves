@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -17,43 +18,102 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
         base.Awake();
         IsPersistant = true;
 
-        _gameDirectory = Directory.GetCurrentDirectory();
-        _modDirectory = $@"{_gameDirectory}\Mods\Wasteland-Waves";
-        _dataDirectory = $@"{_modDirectory}\Data";
-
+        InitializeDirectories();
         InitStations();
     }
 
-
-    private void InitStations()
+    // Initialize all directories and handle any issues that may arise.
+    private void InitializeDirectories()
     {
-        //get the names of all stations.
-        var stations = Directory.GetDirectories(_dataDirectory).Select(Path.GetFileName);
-
-        //get the files names in every station.
-        foreach (var station in stations)
+        try
         {
-            Debug.LogWarning($"Found Station: {station}");
-            var files = Directory.GetFiles($"{_dataDirectory}\\{station}", "*.mp3").Select(Path.GetFileName).ToArray();
+            _gameDirectory = Directory.GetCurrentDirectory();
+            _modDirectory = Path.Combine(_gameDirectory, "Mods", "Wasteland-Waves");
+            _dataDirectory = Path.Combine(_modDirectory, "Data");
 
-            if (files.Length == 0) continue;
+            if (!Directory.Exists(_modDirectory))
+            {
+                Debug.LogError($"Mod directory not found: {_modDirectory}");
+            }
 
-            _stationMap.Add(station, files);
-
-            foreach (var file in files)
-                Debug.LogWarning($"Found File: {file}");
+            if (!Directory.Exists(_dataDirectory))
+            {
+                Debug.LogError($"Data directory not found: {_dataDirectory}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error initializing directories: {ex.Message}");
         }
     }
 
+    // Initialize stations by reading directories and MP3 files.
+    private void InitStations()
+    {
+        if (!Directory.Exists(_dataDirectory))
+        {
+            Debug.LogError($"Data directory does not exist: {_dataDirectory}");
+            return;
+        }
+
+        try
+        {
+            // Get the names of all station directories.
+            var stations = Directory.GetDirectories(_dataDirectory).Select(Path.GetFileName);
+
+            // Read files from each station directory and store them in the dictionary.
+            foreach (var station in stations)
+            {
+                Debug.Log($"Found Station: {station}");
+                var stationDirectory = Path.Combine(_dataDirectory, station);
+
+                var files = Directory.GetFiles(stationDirectory, "*.mp3").Select(Path.GetFileName).ToArray();
+
+                if (files.Length == 0)
+                {
+                    Debug.LogWarning($"No files found in station: {station}");
+                    continue;
+                }
+
+                _stationMap[station] = files;
+
+                // Log the files found in each station.
+                foreach (var file in files)
+                {
+                    Debug.Log($"Station: {station} - Found File: {file}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error initializing stations: {ex.Message}");
+        }
+    }
+
+    // Get a list of all available stations.
     public List<string> GetStations()
     {
+        if (_stationMap.Count == 0)
+        {
+            Debug.LogWarning("No stations available.");
+        }
+
         return _stationMap.Keys.ToList();
     }
 
+    // Get the list of songs for a specific station. 
+    // Use TryGetValue to avoid potential KeyNotFoundException.
     public List<string> GetStationSongs(string stationName)
     {
-        return _stationMap[stationName].ToList();
+        if (_stationMap.TryGetValue(stationName, out var songs))
+        {
+            return songs.ToList();
+        }
+
+        Debug.LogWarning($"Station not found: {stationName}");
+        return new List<string>();  // Return an empty list if the station does not exist.
     }
 
+    // Get the data directory.
     public string GetDataDirectory() => _dataDirectory;
 }

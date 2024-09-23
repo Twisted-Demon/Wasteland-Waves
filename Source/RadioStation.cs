@@ -17,13 +17,14 @@ public class RadioStation : MonoBehaviour
     private AudioClip _currentSongClip = null;
     private AudioClip _nextSongClip = null;
     private bool _isValidated = false;
-    private bool _isLoading = false;
+    private bool _isCurrentLoading = false;
+    private bool _isNextLoading = false;
 
     private float _time;
     public bool isPlaying = true;
 
     private float _elapsedUpdateTime = 0.0f;
-    private List<ClientInfo> _clients = new();
+    private readonly List<ClientInfo> _clients = new();
 
     private void Update()
     {
@@ -88,7 +89,7 @@ public class RadioStation : MonoBehaviour
     {
         this._time += Time.deltaTime;
 
-        if (_currentSongName is null) return;
+        if (_currentSongClip is null) return;
         
         if (_time > _currentSongClip.length)
         {
@@ -139,12 +140,23 @@ public class RadioStation : MonoBehaviour
         
         //set the current song and load
         _currentSongName = newCurrentSong;
-        StartCoroutine(LoadAudioClip(newCurrentSong, result =>
-        {
-            _currentSongClip = result;
-        }));
         
-        //load the next song
+        // If the next song clip is loaded and matches the new current song, 
+        // set the current clip to the next one (no need to reload).
+        if (_nextSongClip != null && _nextSongClip.name == newCurrentSong && _nextSongClip.loadState == AudioDataLoadState.Loaded)
+        {
+            _currentSongClip = _nextSongClip;
+        }
+        // Otherwise, load the new song and set it as the current song.
+        else
+        {
+            StartCoroutine(LoadAudioClip(newCurrentSong, result =>
+            {
+                _currentSongClip = result;
+            }));
+        }
+        
+        //load the next song regardless.
         StartCoroutine(LoadAudioClip(newNextSong, result =>
         {
             _nextSongClip = result;
@@ -159,6 +171,7 @@ public class RadioStation : MonoBehaviour
         if (!isServer && !isSinglePlayer) return;
         
         Debug.Log($"Station: {name} - Current Song Finished, Starting New Song");
+            
         //shuffle if we are out of songs
         if(_songQueue.Count == 0)
             ShuffleQueue();
@@ -203,23 +216,25 @@ public class RadioStation : MonoBehaviour
 
     private void CheckAndLoadSongs()
     {
-        if (_currentSongClip == null && !_isLoading)
+        if (_currentSongClip == null && !_isCurrentLoading)
         {
-            _isLoading = true;
+            _isCurrentLoading = true;
             StartCoroutine(LoadAudioClip(_currentSongName, result =>
             {
                 _currentSongClip = result;
-                _isLoading = false;
+                _isCurrentLoading = false;
             }));
         }
 
-        if (_nextSongClip == null && !_isLoading)
+        if (_songQueue.Count == 0) return;
+        
+        if (_nextSongClip == null && !_isNextLoading)
         {
-            _isLoading = true;
+            _isNextLoading = true;
             StartCoroutine(LoadAudioClip(_songQueue.Peek(), result =>
             {
                 _nextSongClip = result;
-                _isLoading = false;
+                _isNextLoading = false;
             }));
         }
     }
@@ -253,7 +268,7 @@ public class RadioStation : MonoBehaviour
         {
             Debug.Log($"Station: {name} - Validating Song: {songName}");
             var audioFileManager = SingletonMonoBehaviour<SongsFileManager>.Instance;
-            var filePath = $"{audioFileManager.GetDataDirectory()}\\{name}\\{songName}";
+            var filePath = $@"{audioFileManager.GetDataDirectory()}\{name}\{songName}";
             
             var dh = new DownloadHandlerAudioClip($"file://{filePath}", AudioType.MPEG);
             dh.compressed = true;
@@ -269,6 +284,8 @@ public class RadioStation : MonoBehaviour
             {
                 Debug.LogError($"Station: {name} - Unable to Load Song: {songName}; Removing from station list");
             }
+            
+            yield return null; // Yield after each song validation to avoid blocking
         }
         
         _stationSongs = validatedSongs;
@@ -297,6 +314,7 @@ public class RadioStation : MonoBehaviour
         {
             Debug.Log($"Station: {name} - Unloading Audio Clip Data {audioClip.name}");
             audioClip.UnloadAudioData();
+            Resources.UnloadUnusedAssets();
         }
 
         yield return null;

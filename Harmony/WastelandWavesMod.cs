@@ -30,10 +30,5 @@ public class WastelandWavesMod : IModApi
         Debug.Log("Initializing Radio Manager");
         managersGameObject.AddComponent<RadioManager>();
         Debug.Log("Audio Radio Initialized");
-        
-        Debug.Log("Initializing XuiManager Manager");
-        managersGameObject.AddComponent<ModdedXuiManager>();
-        Debug.Log("Audio Radio XuiManager");
-        
     }
 }
