@@ -38,7 +38,7 @@ public class NetPackageVehicleRadioReqPreviousStation : NetPackage
 
         //get the next station
         var stationList = rm.GetStationNames().ToList();
-        var currentStation = vehicleRadio.GetCurrentStationPlaying();
+        var currentStation = vehicleRadio.GetCurrentStationNamePlaying();
         var currentStationIndex = stationList.IndexOf(currentStation);
 
         var newStationIndex = currentStationIndex - 1;
@@ -54,7 +54,7 @@ public class NetPackageVehicleRadioReqPreviousStation : NetPackage
 
         //send to other clients
         var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()
-            .Setup(_vehicleEntityId, newStation, newSong, currentTime);
+            .Setup(_vehicleEntityId, newStation, newSong, currentTime, vehicleRadio.IsMuted());
 
         cm.SendPackage(package);
     }

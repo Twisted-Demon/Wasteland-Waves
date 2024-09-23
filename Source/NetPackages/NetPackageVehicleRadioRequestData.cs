@@ -33,12 +33,12 @@ public class NetPackageVehicleRadioRequestData : NetPackage
         if (vehicleRadio is null)
             return;
 
-        var stationToSend = vehicleRadio.GetCurrentStationPlaying();
+        var stationToSend = vehicleRadio.GetCurrentStationNamePlaying();
         var currentSongToSend = rm.GetStation(stationToSend).GetCurrentSongName();
         var currentTime = rm.GetStation(stationToSend).GetStationTime();
 
         var package = NetPackageManager.GetPackage<NetPackageVehicleRadioSendData>()
-            .Setup(_vehicleEntityId, stationToSend, currentSongToSend, currentTime);
+            .Setup(_vehicleEntityId, stationToSend, currentSongToSend, currentTime, vehicleRadio.IsMuted());
 
         Sender.SendPackage(package);
     }
