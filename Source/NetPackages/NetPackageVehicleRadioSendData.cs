@@ -45,7 +45,7 @@ public class NetPackageVehicleRadioSendData : NetPackage
         if (vehicleRadio == null)
             return;
 
-        vehicleRadio.UpdateRadio(_currentStation, _currentSong, _currentTime);
+        vehicleRadio.UpdateRadio(_currentStation);
     }
 
     public override int GetLength()
