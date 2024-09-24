@@ -81,6 +81,7 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
         if (clientInfo == null)
         {
             Debug.LogWarning("ClientInfo is null during PlayerSpawnedInWorld.");
+            if (Camera.main != null) Camera.main.gameObject.AddComponent<AudioListener>();
             return;
         }
 

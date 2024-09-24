@@ -21,14 +21,11 @@ public class WastelandWavesMod : IModApi
 
         Debug.Log("Initializing Audio File Manager");
         managersGameObject.AddComponent<SongsFileManager>();
-        Debug.Log("Audio File Manager Initialized");
         
         Debug.Log("Initializing Resources Manager");
         managersGameObject.AddComponent<ResourcesManager>();
-        Debug.Log("Audio Resources Initialized");
 
         Debug.Log("Initializing Radio Manager");
         managersGameObject.AddComponent<RadioManager>();
-        Debug.Log("Audio Radio Initialized");
     }
 }

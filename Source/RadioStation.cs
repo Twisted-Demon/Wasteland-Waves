@@ -315,9 +315,7 @@ public class RadioStation : MonoBehaviour
         {
             Debug.Log($"Station: {name} - Unloading Audio Clip Data {audioClip.name}");
             audioClip.UnloadAudioData();
-            Resources.UnloadUnusedAssets();
         }
-
         yield return null;
     }
 
