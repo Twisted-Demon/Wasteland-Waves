@@ -1,8 +1,6 @@
 ﻿<configs>
     <!-- Append the custom window to the HUD group so it's available in-game -->
-    <append xpath="/xui//window_group[@name='compass']">
-        <window_group name="radio">
-            <window name="radioInfo" />
-        </window_group>
+    <append xpath="/xui/ruleset[@name='default']/window_group[@name='compass']">
+        <window name="radioInfo" />
     </append>
 </configs>
