@@ -46,18 +46,8 @@ public class VehicleRadioComponent : MonoBehaviour
     {
         _attachedVehicle = entityVehicle;
         
-        _radioAudioSource = gameObject.AddComponent<AudioSource>();
-        _radioAudioSource.volume = 0.0f;
-        _radioAudioSource.playOnAwake = false;
-        _radioAudioSource.minDistance = 3.0f;
-        _radioAudioSource.maxDistance = 25.0f;
-        _radioAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-        _radioAudioSource.dopplerLevel = 0.5f;
-        _radioAudioSource.spread = 0.0f;
-        SetSpatialAudio(true);
+        SetUpAudioSource();
         
-        _audioLowPassFilter = gameObject.AddComponent<AudioLowPassFilter>();
-
         if (IsServerOrSinglePlayer())
         {
             var stationNames = _radioManager.GetStationNames().ToList();
@@ -77,6 +67,30 @@ public class VehicleRadioComponent : MonoBehaviour
     public string GetCurrentStationNamePlaying()
     {
         return _currentRadioStationName;
+    }
+
+    private void SetUpAudioSource()
+    {
+        _radioAudioSource = gameObject.AddComponent<AudioSource>();
+        _radioAudioSource.volume = 0.0f;
+        _radioAudioSource.playOnAwake = false;
+        _radioAudioSource.minDistance = 3.0f;
+        _radioAudioSource.maxDistance = 25.0f;
+        _radioAudioSource.rolloffMode = AudioRolloffMode.Custom;
+        _radioAudioSource.dopplerLevel = 0.0f;
+        _radioAudioSource.spread = 0.0f;
+        
+        SetSpatialAudio(true);
+        
+        _audioLowPassFilter = gameObject.AddComponent<AudioLowPassFilter>();
+        
+        //set up the spatial curve
+        var customRolloffCurve = new AnimationCurve();
+        customRolloffCurve.AddKey(_radioAudioSource.minDistance, 1.0f);
+        customRolloffCurve.AddKey(_radioAudioSource.maxDistance * 0.35f, 0.5f);
+        customRolloffCurve.AddKey(_radioAudioSource.maxDistance, 0.0f);
+
+        _radioAudioSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, customRolloffCurve);
     }
     
     private void HandleStationControl()
