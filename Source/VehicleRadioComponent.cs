@@ -22,7 +22,7 @@ public class VehicleRadioComponent : MonoBehaviour
     private bool _isLocalPlayerAttachedToVehicle;
     private float _finalRadioVolume = 0.65f;
     private bool _isMuted = true;
-
+    
     private void Update()
     {
         //here we check if we are in the vehicle
