@@ -1,4 +1,4 @@
-﻿public class XUiC_RadioInfo : XUiController
+﻿class XUiC_RadioInfo : XUiController
 {
     private string _radioStationText = string.Empty;
     private string _currentSongText = string.Empty;
@@ -65,7 +65,7 @@
                 value = CurrentSongText;
                 return true;
             case "isVisible":
-                value = _isVisible? "true" : "false";
+                value = IsVisible? "true" : "false";
                 return true;
             default:
                 return base.GetBindingValue(ref value, bindingName);

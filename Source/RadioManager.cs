@@ -6,7 +6,7 @@ namespace Wasteland_Waves.Source;
 public class RadioManager : SingletonMonoBehaviour<RadioManager>
 {
     private readonly Dictionary<string, RadioStation> _radioStations = new();
-
+    
     public override void singletonAwake()
     {
         base.singletonAwake();
@@ -26,7 +26,7 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
             return station;
         }
 
-        Debug.LogError($"Station {stationName} not found.");
+        Log.Error("Station {0} not found.", stationName);
         return null;
     }
 
@@ -39,7 +39,7 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
         }
         else
         {
-            Debug.LogError($"Failed to update, Station {stationName} not found.");
+            Log.Error("Failed to update, Station {0} not found.", stationName);
         }
     }
 
@@ -61,11 +61,11 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 
         if (clientInfo == null)
         {
-            Debug.LogWarning("ClientInfo is null during PlayerDisconnected.");
+            Log.Warning("ClientInfo is null during PlayerDisconnected.");
             return;
         }
 
-        Debug.Log($"Client {clientInfo.playerName} disconnected.");
+        Log.Out("Client {0} disconnected.", clientInfo.playerName);
 
         foreach (var station in _radioStations.Values)
         {
@@ -80,12 +80,12 @@ public class RadioManager : SingletonMonoBehaviour<RadioManager>
 
         if (clientInfo == null)
         {
-            Debug.LogWarning("ClientInfo is null during PlayerSpawnedInWorld.");
+            Log.Warning("ClientInfo is null during PlayerSpawnedInWorld.");
             if (Camera.main != null) Camera.main.gameObject.AddComponent<AudioListener>();
             return;
         }
 
-        Debug.Log($"Client {clientInfo.playerName} spawned in world. Sending radio data.");
+        Log.Out("Client {0} spawned in world. Sending radio data.", clientInfo.playerName);
 
         foreach (var station in _radioStations.Values)
         {

@@ -6,45 +6,63 @@
     <LangVersion>10</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\0_TFP_Harmony\0Harmony.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\7DaysToDie_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="LogLibrary">
       <HintPath>..\..\7DaysToDie_Data\Managed\LogLibrary.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Unity.ResourceManager">
       <HintPath>..\..\7DaysToDie_Data\Managed\Unity.ResourceManager.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.InputModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAudioModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule">
       <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
 

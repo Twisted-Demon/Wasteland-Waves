@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using UniLinq;
 using UnityEngine;
@@ -136,7 +135,7 @@ public class VehicleRadioComponent : MonoBehaviour
         _audioLowPassFilter.cutoffFrequency = !_isLocalPlayerAttachedToVehicle ? 1000f : 10000f;
         
         //set if we need to be using spatial audio
-        //i.e if we are in vehicle or not
+        //i.e. if we are in vehicle or not
         SetSpatialAudio(!_isLocalPlayerAttachedToVehicle);
     }
     
@@ -339,9 +338,5 @@ public class VehicleRadioComponent : MonoBehaviour
         var connectionManager = SingletonMonoBehaviour<ConnectionManager>.Instance;
         return connectionManager.IsServer || connectionManager.IsSinglePlayer;
     }
-
-    private void OnGUI()
-    {
-        
-    }
+    
 }

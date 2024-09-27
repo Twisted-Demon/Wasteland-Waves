@@ -33,17 +33,17 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
 
             if (!Directory.Exists(_modDirectory))
             {
-                Debug.LogError($"Mod directory not found: {_modDirectory}");
+                Log.Error($"Mod directory not found: {_modDirectory}");
             }
 
             if (!Directory.Exists(_dataDirectory))
             {
-                Debug.LogError($"Data directory not found: {_dataDirectory}");
+                Log.Error($"Data directory not found: {_dataDirectory}");
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error initializing directories: {ex.Message}");
+            Log.Exception(ex);
         }
     }
 
@@ -52,7 +52,7 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
     {
         if (!Directory.Exists(_dataDirectory))
         {
-            Debug.LogError($"Data directory does not exist: {_dataDirectory}");
+            Log.Error($"Data directory does not exist: {_dataDirectory}");
             return;
         }
 
@@ -64,7 +64,7 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
             // Read files from each station directory and store them in the dictionary.
             foreach (var station in stations)
             {
-                Debug.Log($"Found Station: {station}");
+                Log.Out($"Found Station: {station}");
                 var stationDirectory = Path.Combine(_dataDirectory, station);
 
                 var files = Directory.GetFiles(stationDirectory, "*.mp3").Select(Path.GetFileName).ToArray();
@@ -80,13 +80,13 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
                 // Log the files found in each station.
                 foreach (var file in files)
                 {
-                    Debug.Log($"Station: {station} - Found File: {file}");
+                    Log.Out($"Station: {station} - Found File: {file}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error initializing stations: {ex.Message}");
+            Log.Exception(ex);
         }
     }
 
@@ -95,7 +95,7 @@ public class SongsFileManager : SingletonMonoBehaviour<SongsFileManager>
     {
         if (_stationMap.Count == 0)
         {
-            Debug.LogWarning("No stations available.");
+            Log.Warning("No stations available.");
         }
 
         return _stationMap.Keys.ToList();
