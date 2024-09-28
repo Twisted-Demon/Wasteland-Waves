@@ -35,7 +35,7 @@ public class VehicleRadioComponent : MonoBehaviour
         
         //handle volume control and station control if we are in the vehicle
         if (!_isLocalPlayerAttachedToVehicle) return;
-
+        
         HandleVolumeControl();
         HandleStationControl();
         HandleMuteControl();
