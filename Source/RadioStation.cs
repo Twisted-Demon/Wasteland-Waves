@@ -66,15 +66,13 @@ public class RadioStation : MonoBehaviour
         _stationSongs = SingletonMonoBehaviour<SongsFileManager>.Instance.GetStationSongs(name);
         //validate the songs
         StartCoroutine(ValidateSongs());
-        
-        var isServer = SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
-        if (!isServer) return;
     }
 
     public void CleanUp()
     {
         _clients.Clear();
     }
+    
     public void PlayerSpawnedInWorld(ClientInfo clientInfo)
     {
         _clients.Add(clientInfo);
@@ -87,7 +85,7 @@ public class RadioStation : MonoBehaviour
 
     public void UpdateRadio()
     {
-        this._time += Time.deltaTime;
+        _time += Time.deltaTime;
 
         if (_currentSongClip is null) return;
         
@@ -132,7 +130,7 @@ public class RadioStation : MonoBehaviour
         //only update if we have a new song.
         if (_currentSongName == newCurrentSong) return;
         
-        Debug.LogWarning($"Station: {name} - Updating from server");
+        Log.Out("Station: {0} - Updating from server", name);
         
         //unload the old song clip
         var songClipToUnload = _currentSongClip;
@@ -143,7 +141,8 @@ public class RadioStation : MonoBehaviour
         
         // If the next song clip is loaded and matches the new current song, 
         // set the current clip to the next one (no need to reload).
-        if (_nextSongClip != null && _nextSongClip.name == newCurrentSong && _nextSongClip.loadState == AudioDataLoadState.Loaded)
+        if (_nextSongClip != null && _nextSongClip.name == newCurrentSong 
+                                  && _nextSongClip.loadState == AudioDataLoadState.Loaded)
         {
             _currentSongClip = _nextSongClip;
             _nextSongClip = null;
@@ -171,7 +170,7 @@ public class RadioStation : MonoBehaviour
 
         if (!isServer && !isSinglePlayer) return;
         
-        Debug.Log($"Station: {name} - Current Song Finished, Starting New Song");
+        Log.Out("Station: {0} - Current Song Finished, Starting New Song", name);
             
         //shuffle if we are out of songs
         if(_songQueue.Count == 0)
@@ -267,7 +266,7 @@ public class RadioStation : MonoBehaviour
         var validatedSongs = new List<string>();
         foreach (var songName in _stationSongs)
         {
-            Debug.Log($"Station: {name} - Validating Song: {songName}");
+            Log.Out("Station: {0} - Validating Song: {1}", name, songName);
             var audioFileManager = SingletonMonoBehaviour<SongsFileManager>.Instance;
             var filePath = $@"{audioFileManager.GetDataDirectory()}\{name}\{songName}";
             
@@ -280,10 +279,12 @@ public class RadioStation : MonoBehaviour
             if (wr.responseCode == 200)
             {
                 validatedSongs.Add(songName);
+
+                yield return UnloadAudioClip(dh.audioClip);
             }
             else
             {
-                Debug.LogError($"Station: {name} - Unable to Load Song: {songName}; Removing from station list");
+                Log.Error("Station: {0} - Unable to Load Song: {1} Removing from station list", name, songName);
             }
             
             yield return null; // Yield after each song validation to avoid blocking
@@ -313,7 +314,7 @@ public class RadioStation : MonoBehaviour
     {
         if (audioClip != null && audioClip.loadState == AudioDataLoadState.Loaded)
         {
-            Debug.Log($"Station: {name} - Unloading Audio Clip Data {audioClip.name}");
+            Log.Out("Station: {0} - Unloading Audio Clip Data {1}", name, audioClip.name);
             audioClip.UnloadAudioData();
         }
         yield return null;
@@ -321,10 +322,10 @@ public class RadioStation : MonoBehaviour
 
     private IEnumerator LoadAudioClip(string songName, System.Action<AudioClip> callback)
     {
-        Debug.Log($"Station: {name} - Loading AudioClip: {songName}");
+        Log.Out("Station: {0} - Loading AudioClip: {1}", name, songName);
         var audioFileManager = SingletonMonoBehaviour<SongsFileManager>.Instance;
 
-        var filePath = $"{audioFileManager.GetDataDirectory()}\\{name}\\{songName}";
+        var filePath = $@"{audioFileManager.GetDataDirectory()}\{name}\{songName}";
 
         var dh = new DownloadHandlerAudioClip($"file://{filePath}", AudioType.MPEG);
         dh.compressed = true;
@@ -340,7 +341,7 @@ public class RadioStation : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"Station: {name} - Unable to Load AudioClip: {songName}");
+            Log.Error("Station: {0} - Unable to Load AudioClip: {1}", name, songName);
         }
         
     }
@@ -356,6 +357,6 @@ public class RadioStation : MonoBehaviour
         message.AppendLine($"Next Song Load State: {_nextSongClip?.loadState}");
         message.AppendLine($"Time: {_time}");
         
-        Debug.LogWarning(message.ToString());
+        Log.Warning(message.ToString());
     }
 }

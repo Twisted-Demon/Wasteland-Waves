@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using UniLinq;
 using UnityEngine;
@@ -36,7 +35,7 @@ public class VehicleRadioComponent : MonoBehaviour
         
         //handle volume control and station control if we are in the vehicle
         if (!_isLocalPlayerAttachedToVehicle) return;
-
+        
         HandleVolumeControl();
         HandleStationControl();
         HandleMuteControl();
@@ -108,6 +107,7 @@ public class VehicleRadioComponent : MonoBehaviour
             SyncRadioMuteWithClients();
         else
             SendMuteRequestToServer(!_isMuted);
+
     }
     
     private void HandleVolumeControl()
@@ -135,7 +135,7 @@ public class VehicleRadioComponent : MonoBehaviour
         _audioLowPassFilter.cutoffFrequency = !_isLocalPlayerAttachedToVehicle ? 1000f : 10000f;
         
         //set if we need to be using spatial audio
-        //i.e if we are in vehicle or not
+        //i.e. if we are in vehicle or not
         SetSpatialAudio(!_isLocalPlayerAttachedToVehicle);
     }
     
@@ -161,12 +161,14 @@ public class VehicleRadioComponent : MonoBehaviour
     
     private void PlayerExitedVehicle()
     {
-        
+        OpenCloseRadioInfoText(false);
     }
     
     private void PlayerEnteredVehicle()
     {
         DisplayRadioInfo(_currentRadioStationName, true, true);
+        OpenCloseRadioInfoText(true);
+        UpdateRadioInfoText();
     }
     
     private void RequestRadioDataFromServer()
@@ -198,6 +200,7 @@ public class VehicleRadioComponent : MonoBehaviour
         if (_isLocalPlayerAttachedToVehicle && (stationChanged || songChanged || enteredVehicle) && displayRadioInfo)
         {
             DisplayRadioInfo(newStation, songChanged, enteredVehicle);
+            UpdateRadioInfoText();
         }
 
         if (IsServer())
@@ -233,6 +236,34 @@ public class VehicleRadioComponent : MonoBehaviour
         }
 
         GameManager.ShowTooltip(localPlayer, tooltip.ToString());
+    }
+
+    private void OpenCloseRadioInfoText(bool value)
+    {
+        var radioController = GetRadioInfoController();
+        if(radioController is null) return;
+        
+        radioController.IsVisible = value;
+    }
+
+    private void UpdateRadioInfoText()
+    {
+        var radioController = GetRadioInfoController();
+        if(radioController is null) return;
+        
+        radioController.CurrentSongText = Path.GetFileNameWithoutExtension(_currentSongName);
+        radioController.RadioStationText = _currentRadioStationName;
+    }
+
+    private XUiC_RadioInfo GetRadioInfoController()
+    {
+        var localPlayerUi = GameManager.Instance.World.GetLocalPlayers()[0].playerUI;
+        if (localPlayerUi is null) return null;
+
+        var compassWindow = localPlayerUi.xui.FindWindowGroupByName("compass");
+        var radioController = compassWindow.GetChildByType<XUiC_RadioInfo>();
+        
+        return radioController;
     }
     
     private void SyncRadioDataWithClients(string newStation, string currentSong, float stationTime)
@@ -307,4 +338,5 @@ public class VehicleRadioComponent : MonoBehaviour
         var connectionManager = SingletonMonoBehaviour<ConnectionManager>.Instance;
         return connectionManager.IsServer || connectionManager.IsSinglePlayer;
     }
+    
 }

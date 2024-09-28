@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using UniLinq;
+// ReSharper disable InconsistentNaming
 
 namespace Wasteland_Waves.Harmony;
 

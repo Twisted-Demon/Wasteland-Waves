@@ -14,6 +14,6 @@ public class EntityVehicleInit
         var radio = gameObject.AddComponent<VehicleRadioComponent>();
         radio.Init(__instance);
 
-        Debug.LogWarning("Created Vehicle Radio Component");
+        Log.Out("Added Radio Component to {0}", gameObject.name);
     }
 }

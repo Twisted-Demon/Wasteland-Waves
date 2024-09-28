@@ -1,8 +1,9 @@
 <configs>
     <append xpath="/windows">
-        <window name="radioInfo" controller="XUiController">
-            <rect name="hud" pos="0,-6" rows="2" cols="1" width="168" height="168" side="left">
-                <label anchor="CenterCenter" pivot="topleft" depth="3" text="7 Days To Die Vanilla Public Server" font_size="18" crispness="Never" effect="outline" effect_distance="1,1" upper_case="true" justify="center" />
+        <window name="radioInfo" pos="9,-9" controller="RadioInfo, Wasteland-Waves" anchor="LeftTop" pivot="left" width="360" height="148">
+            <rect name="hud" visible="{isVisible}" >
+                <label anchor="LeftTop" color="[white]" pivot="topleft" depth="2" text="Station: {radioStation}" font_size="18" crispness="Never" effect="outline" effect_distance="1,1" upper_case="true" justify="left" />
+                <label anchor="LeftTop" pos="0,-18" color="[white]" pivot="topleft" depth="3" text="Song: {currentSong}" font_size="18" crispness="Never" effect="outline" effect_distance="1,1" upper_case="true" justify="left" />
             </rect>
         </window>
     </append>
